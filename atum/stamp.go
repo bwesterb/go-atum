@@ -8,10 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 )
 
-func cmdStamp(c *cli.Context) {
+func cmdStamp(c *cli.Context) error {
 	var req atum.Request
 	var err error
 
@@ -27,7 +30,7 @@ func cmdStamp(c *cli.Context) {
 			return cli.NewExitError(
 				"--hex-nonce and --base64-nonce shouldn't both be set", 2)
 		}
-		req.Nonce, err = base64.RawURLEncoding.DecodeString(
+		req.Nonce, err = base64.StdEncoding.DecodeString(
 			c.String("base64-nonce"))
 		if err != nil {
 			return cli.NewExitError("Failed to parse --base64-nonce", 1)
@@ -39,14 +42,17 @@ func cmdStamp(c *cli.Context) {
 			"Either --base64-nonce of --hex-nonce should be set", 3)
 	}
 
+	var theTime int64
 	if c.IsSet("time") {
-		req.Time = &int64(c.Int("time"))
+		theTime = int64(c.Int("time"))
 	} else {
-		req.Time = time.Now().Unix()
+		theTime = time.Now().Unix()
 	}
+	req.Time = &theTime
 
 	if c.IsSet("alg") {
-		req.PreferredSigAlg = &c.String("alg")
+		var preferredAlg = atum.SignatureAlgorithm(c.String("alg"))
+		req.PreferredSigAlg = &preferredAlg
 	}
 
 	ts, err := atum.SendRequest(c.String("server"), req)
@@ -60,4 +66,17 @@ func cmdStamp(c *cli.Context) {
 		return cli.NewExitError(fmt.Sprintf(
 			"Failed to convert timestamp to JSON: %v", err), 5)
 	}
+
+	if !c.IsSet("output") {
+		os.Stdout.Write(tsBuf)
+		return nil
+	}
+
+	err = ioutil.WriteFile(c.String("output"), tsBuf, 0644)
+	if err != nil {
+		return cli.NewExitError(fmt.Sprintf(
+			"Failed to write to %s: %v", c.String("output"), err), 6)
+	}
+
+	return nil
 }

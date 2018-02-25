@@ -1,7 +1,11 @@
 // Atum is a post-quantum secure easy-to-use trusted time-stamping protocol.
 package atum
 
-// A nonce with a signature
+import (
+	"encoding/binary"
+)
+
+// A signed timestamp on a nonce (nonce not included)
 type Timestamp struct {
 
 	// The unix time at which the timestamp was set
@@ -58,11 +62,15 @@ type Response struct {
 type ErrorCode string
 
 const (
-	// There is no error
-	NoErrorCode ErrorCode = ""
+	// There is too much lag between the time requested for the timestamp
+	// and the time at which the request is processed.
+	ErrorCodeLag ErrorCode = "too much lag"
 
-	// There is too much lag
-	ErrorCodeLag = "lag"
+	// The nonce is missing
+	ErrorMissingNonce ErrorCode = "missing nonce"
+
+	// The nonce is too long
+	ErrorNonceTooLong ErrorCode = "nonce is too long"
 )
 
 // Supported signature algorithms.
@@ -80,11 +88,24 @@ const (
 // Information published by an Atum server.
 type ServerInfo struct {
 	// The maximum size of nonce accepted
-	MaxNonceSize int
+	MaxNonceSize int64
 
 	// Maximum lag to accept in number of seconds
-	AcceptableLag int
+	AcceptableLag int64
 
 	// Default signature algorithm the server uses
 	DefaultSigAlg SignatureAlgorithm
+}
+
+// Convenience function to set the Error field
+func (resp *Response) SetError(err ErrorCode) {
+	resp.Error = &err
+}
+
+// Pack time and nonce as one byteslice
+func EncodeTimeNonce(time int64, nonce []byte) []byte {
+	ret := make([]byte, len(nonce)+8)
+	binary.BigEndian.PutUint64(ret, uint64(time))
+	copy(ret[8:], nonce)
+	return ret
 }

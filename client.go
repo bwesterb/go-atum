@@ -51,7 +51,7 @@ func SendRequest(serverUrl string, req Request) (*Timestamp, Error) {
 	}
 
 	var resp Response
-	err = json.Unmarshal(bodyBuf, resp)
+	err = json.Unmarshal(bodyBuf, &resp)
 	if err != nil {
 		return nil, wrapErrorf(err, "Failed to parse response")
 	}
