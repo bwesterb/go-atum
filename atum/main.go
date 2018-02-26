@@ -22,6 +22,10 @@ func main() {
 					Value: "http://localhost:8080/",
 				},
 				cli.StringFlag{
+					Name:  "file, f",
+					Usage: "Put timestamp on `FILE`",
+				},
+				cli.StringFlag{
 					Name:  "base64-nonce, b",
 					Usage: "URL base64 encoded nonce",
 				},

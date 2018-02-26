@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 func cmdStamp(c *cli.Context) error {
 	var req atum.Request
 	var err error
+	var hashing *atum.Hashing
 
 	if c.IsSet("hex-nonce") {
 		req.Nonce, err = hex.DecodeString(c.String("hex-nonce"))
@@ -37,9 +39,31 @@ func cmdStamp(c *cli.Context) error {
 		}
 	}
 
+	if c.IsSet("file") {
+		if req.Nonce != nil {
+			return cli.NewExitError(
+				"Only one of --hex-nonce, --file and --base64-nonce should be set", 7)
+		}
+		file, err := os.Open(c.String("file"))
+		if err != nil {
+			return cli.NewExitError(fmt.Sprintf("Failed to open file: %v",
+				err), 8)
+		}
+		defer file.Close()
+		hashing = &atum.Hashing{
+			Hash:   atum.Shake256,
+			Prefix: make([]byte, 32),
+		}
+		rand.Read(hashing.Prefix)
+		req.Nonce, err = hashing.ComputeNonce(file)
+		if err != nil {
+			return cli.NewExitError(fmt.Sprintf("ComputeNonce(): %v", err), 9)
+		}
+	}
+
 	if req.Nonce == nil {
 		return cli.NewExitError(
-			"Either --base64-nonce of --hex-nonce should be set", 3)
+			"Either --base64-nonce, --hex-nonce or --file should be set", 3)
 	}
 
 	var theTime int64
@@ -67,15 +91,21 @@ func cmdStamp(c *cli.Context) error {
 			"Failed to convert timestamp to JSON: %v", err), 5)
 	}
 
-	if !c.IsSet("output") {
+	var outFile string
+	if c.IsSet("output") {
+		outFile = c.String("output")
+	} else if c.IsSet("file") {
+		outFile = c.String("file") + ".atum-timestamp"
+	} else {
 		os.Stdout.Write(tsBuf)
+		os.Stdout.Write([]byte{10})
 		return nil
 	}
 
-	err = ioutil.WriteFile(c.String("output"), tsBuf, 0644)
+	err = ioutil.WriteFile(outFile, tsBuf, 0644)
 	if err != nil {
 		return cli.NewExitError(fmt.Sprintf(
-			"Failed to write to %s: %v", c.String("output"), err), 6)
+			"Failed to write to %s: %v", outFile, err), 6)
 	}
 
 	return nil

@@ -36,9 +36,9 @@ type Cache interface {
 	StorePublicKey(serverUrl string, alg SignatureAlgorithm,
 		pk []byte, expires time.Time)
 
-	// Returns whether the given public key is known to be valid for the
-	// given server.
-	GetPublicKey(serverUrl string, alg SignatureAlgorithm, pk []byte) bool
+	// Returns until when this public key should be trusted for the given
+	// server (and nil if the public key is not to be trusted).
+	GetPublicKey(serverUrl string, alg SignatureAlgorithm, pk []byte) *time.Time
 
 	// Caches the server information.
 	StoreServerInfo(serverUrl string, info ServerInfo)
@@ -119,11 +119,12 @@ func (cache *sqlite3Cache) StorePublicKey(serverUrl string, alg SignatureAlgorit
 	}
 }
 
-func (cache *sqlite3Cache) GetPublicKey(serverUrl string, alg SignatureAlgorithm, pk []byte) bool {
+func (cache *sqlite3Cache) GetPublicKey(serverUrl string,
+	alg SignatureAlgorithm, pk []byte) *time.Time {
 	cache.mux.Lock()
 	defer cache.mux.Unlock()
 	if !cache.ensureOpen() {
-		return false
+		return nil
 	}
 	var record pkRecord
 	if cache.db.Where(&pkRecord{
@@ -131,12 +132,9 @@ func (cache *sqlite3Cache) GetPublicKey(serverUrl string, alg SignatureAlgorithm
 		Alg:    alg,
 		Server: serverUrl,
 	}).First(&record).RecordNotFound() {
-		return false
+		return nil
 	}
-	if time.Until(record.Expires).Seconds() < 0 {
-		return false
-	}
-	return true
+	return &record.Expires
 }
 
 func (cache *sqlite3Cache) StoreServerInfo(serverUrl string, info ServerInfo) {

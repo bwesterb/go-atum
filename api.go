@@ -5,17 +5,46 @@ import (
 	"github.com/bwesterb/go-pow"
 
 	"encoding/binary"
+	"time"
 )
 
-// A signed timestamp on a nonce (nonce not included)
+// A signed timestamp on a nonce or longer message.
+//
+// The message/nonce are not included.
 type Timestamp struct {
 
 	// The unix time at which the timestamp was set
 	Time int64
 
+	// The server by which the timestamp was set
+	ServerUrl string
+
 	// The signature.
 	Sig Signature
+
+	// The Atum server only signs short nonces.  To timestamp a longer message,
+	// the Atum server first hashes the long message to a nonce, which
+	// in turn is signed by the Atum server.  If this is the case, the following
+	// field contains the hash used.
+	Hashing *Hashing `json:",omitempty"`
 }
+
+// See the Timestamp.Hashing field
+type Hashing struct {
+
+	// The hash function used to compress the message into a nonce
+	Hash Hash
+
+	// A prefix to hide the hash of the message from the Atum server
+	Prefix []byte
+}
+
+// A possible hash
+type Hash string
+
+const (
+	Shake256 Hash = "shake256"
+)
 
 // The signature of the timestamp
 type Signature struct {
@@ -65,6 +94,15 @@ type Response struct {
 
 	// In case of most errors, the server will include server information.
 	Info *ServerInfo
+}
+
+// Response of the Atum server to a public key check
+type PublicKeyCheckResponse struct {
+	// Should we trust this public key
+	Trusted bool
+
+	// When should you check again?
+	Expires time.Time
 }
 
 type ErrorCode string

@@ -1,10 +1,18 @@
 package atum
 
 import (
+	"github.com/bwesterb/go-xmssmt" // imported as xmssmt
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/sha3"
+
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -105,4 +113,112 @@ func sendRequest(serverUrl string, req Request) (bool, *Timestamp, Error) {
 	}
 
 	return false, resp.Stamp, nil
+}
+
+// Computes the nonce associated to a message, when hashing is enabled.
+func (h *Hashing) ComputeNonce(msg io.Reader) ([]byte, Error) {
+	switch h.Hash {
+	case Shake256:
+		ret := make([]byte, 64)
+		shake := sha3.NewShake256()
+		shake.Write(h.Prefix)
+		_, err := io.Copy(shake, msg)
+		if err != nil {
+			return nil, wrapErrorf(err, "hashing failed")
+		}
+		shake.Read(ret)
+		return ret, nil
+	default:
+		return nil, errorf("Hash %s not supported", h.Hash)
+	}
+}
+
+// Verifies the timestamp on a message contained in a io.Reader
+func (ts *Timestamp) VerifyFrom(r io.Reader) (valid bool, err Error) {
+	var nonce []byte
+
+	// Get the nonce, by hashing possibly
+	if ts.Hashing != nil {
+		nonce, err = ts.Hashing.ComputeNonce(r)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		var err2 error
+		nonce, err2 = ioutil.ReadAll(r)
+		if err2 != nil {
+			return false, wrapErrorf(err, "ioutil.ReadAll()")
+		}
+	}
+
+	pkOk, err := ts.VerifyPublicKey()
+	if err != nil || !pkOk {
+		return false, err
+	}
+
+	return ts.Sig.DangerousVerifySignatureButNotPublicKey(ts.Time, nonce)
+}
+
+// Asks the Atum server if the public key on the signature should be trusted
+func (ts *Timestamp) VerifyPublicKey() (trusted bool, err Error) {
+	expires := cache.GetPublicKey(ts.ServerUrl, ts.Sig.Alg, ts.Sig.PublicKey)
+	fmt.Printf("VerifyPublicKey %v", expires)
+	if expires != nil && time.Until(*expires).Seconds() > 0 {
+		return true, nil
+	}
+	q := url.Values{}
+	q.Set("alg", string(ts.Sig.Alg))
+	q.Set("pk", hex.EncodeToString(ts.Sig.PublicKey))
+	resp, err2 := http.Get(fmt.Sprintf("%s/checkPublicKey?%s",
+		ts.ServerUrl, q.Encode()))
+	if err2 != nil {
+		return false, wrapErrorf(err2, "http.Get()")
+	}
+	defer resp.Body.Close()
+	buf, err2 := ioutil.ReadAll(resp.Body)
+	if err2 != nil {
+		return false, wrapErrorf(err2, "ioutil.ReadAll()")
+	}
+	var pkResp PublicKeyCheckResponse
+	err2 = json.Unmarshal(buf, &pkResp)
+	if err2 != nil {
+		return false, wrapErrorf(err2, "json.Unmarshal()")
+	}
+	if pkResp.Expires.Sub(time.Unix(ts.Time, 0)).Seconds() < 0 {
+		return false, errorf("Public key expired")
+	}
+	if !pkResp.Trusted {
+		return false, nil
+	}
+	cache.StorePublicKey(ts.ServerUrl, ts.Sig.Alg,
+		ts.Sig.PublicKey, pkResp.Expires)
+	return true, nil
+}
+
+// Verifies the timestamp
+func (ts *Timestamp) Verify(msgOrNonce []byte) (valid bool, err Error) {
+	return ts.VerifyFrom(bytes.NewReader(msgOrNonce))
+}
+
+// Verifies the signature on a nonce, but not the public key.
+//
+// You should only use this function if you have checked the public key
+// should be trusted.
+func (sig *Signature) DangerousVerifySignatureButNotPublicKey(
+	time int64, nonce []byte) (valid bool, err Error) {
+	msg := EncodeTimeNonce(time, nonce)
+
+	switch sig.Alg {
+	case Ed25519:
+		return ed25519.Verify(ed25519.PublicKey(sig.PublicKey),
+			msg, sig.Data), nil
+	case XMSSMT:
+		valid, err2 := xmssmt.Verify(sig.PublicKey, sig.Data, msg)
+		if err2 != nil {
+			return valid, wrapErrorf(err2, "xmssmt.Verify")
+		}
+		return valid, nil
+	default:
+		return false, errorf("Signature algorithm %s not supported", sig.Alg)
+	}
 }
