@@ -2,6 +2,8 @@
 package atum
 
 import (
+	"github.com/bwesterb/go-pow"
+
 	"encoding/binary"
 )
 
@@ -35,6 +37,12 @@ type Request struct {
 	// is too long.  See ServerInfo.MaxNonceSize.
 	Nonce []byte
 
+	// The proof of work (if required).
+	//
+	// THe SendRequest() function will fill this field if it is required by
+	// ServerInfo.RequiredProofOfWork.
+	ProofOfWork *pow.Proof
+
 	// The following fields are optional.
 
 	// Unix time to put on the timestamp.  The server will reject the request
@@ -66,11 +74,10 @@ const (
 	// and the time at which the request is processed.
 	ErrorCodeLag ErrorCode = "too much lag"
 
-	// The nonce is missing
 	ErrorMissingNonce ErrorCode = "missing nonce"
-
-	// The nonce is too long
 	ErrorNonceTooLong ErrorCode = "nonce is too long"
+	ErrorMissingPow   ErrorCode = "proof of work is missing"
+	ErrorPowInvalid   ErrorCode = "proof of work is invalid"
 )
 
 // Supported signature algorithms.
@@ -95,6 +102,10 @@ type ServerInfo struct {
 
 	// Default signature algorithm the server uses
 	DefaultSigAlg SignatureAlgorithm
+
+	// The necessary proof-of-work required for the different signature
+	// algorithms.
+	RequiredProofOfWork map[SignatureAlgorithm]pow.Request
 }
 
 // Convenience function to set the Error field
