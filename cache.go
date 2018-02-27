@@ -114,7 +114,7 @@ func (cache *sqlite3Cache) StorePublicKey(serverUrl string, alg SignatureAlgorit
 		Alg:     alg,
 		Server:  serverUrl,
 		Expires: expires,
-	}); err != nil {
+	}).Error; err != nil {
 		log.Printf("atum cache: StorePublicKey(): %v", err)
 	}
 }

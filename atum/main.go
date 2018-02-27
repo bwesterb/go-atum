@@ -27,7 +27,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "base64-nonce, b",
-					Usage: "URL base64 encoded nonce",
+					Usage: "Base64 encoded nonce",
 				},
 				cli.StringFlag{
 					Name:  "hex-nonce, H",
@@ -44,6 +44,33 @@ func main() {
 				cli.StringFlag{
 					Name:  "output, o",
 					Usage: "Write output to `FILE`",
+				},
+			},
+		},
+		{
+			Name:   "verify",
+			Usage:  "Verify an Atum timestamp",
+			Action: cmdVerify,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "file, f",
+					Usage: "Checks the timestamp for `FILE`",
+				},
+				cli.StringFlag{
+					Name:  "base64-nonce, b",
+					Usage: "Checks timestamp for base64 encoded nonce",
+				},
+				cli.StringFlag{
+					Name:  "hex-nonce, H",
+					Usage: "Checks timestamp for hex encoded nonce",
+				},
+				cli.BoolFlag{
+					Name:  "stdin, s",
+					Usage: "Read timestamp from stdin",
+				},
+				cli.StringFlag{
+					Name:  "timestamp, t",
+					Usage: "Read timestamp from `FILE`",
 				},
 			},
 		},
