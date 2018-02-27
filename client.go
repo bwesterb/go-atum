@@ -162,7 +162,6 @@ func (ts *Timestamp) VerifyFrom(r io.Reader) (valid bool, err Error) {
 // Asks the Atum server if the public key on the signature should be trusted
 func (ts *Timestamp) VerifyPublicKey() (trusted bool, err Error) {
 	expires := cache.GetPublicKey(ts.ServerUrl, ts.Sig.Alg, ts.Sig.PublicKey)
-	fmt.Printf("VerifyPublicKey %v", expires)
 	if expires != nil && time.Until(*expires).Seconds() > 0 {
 		return true, nil
 	}
