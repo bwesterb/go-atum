@@ -43,6 +43,9 @@ ts, err := atum.SendRequest("https://some.atum/server",
 The `ts` is an `*atum.Timestamp`, which can be serialized using
 `ts.MarshalText()` or simply `json.Marshal(ts)`.
 
+For further documentation, see [godoc](
+    https://godoc.org/github.com/bwesterb/go-atum).
+
 
 Commandline tool
 ----------------
@@ -68,3 +71,9 @@ Protocol
 --------
 
 TODO: describe the Atum protocol.
+
+Server
+------
+
+Want to run your own Atum server?  Check out [atumd](
+    https://github.com/bwesterb/atumd).
