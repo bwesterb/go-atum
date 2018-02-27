@@ -85,6 +85,8 @@ func cmdStamp(c *cli.Context) error {
 			"Failed to create timestamp: %v", err), 4)
 	}
 
+	ts.Hashing = hashing
+
 	tsBuf, err := json.Marshal(ts)
 	if err != nil {
 		return cli.NewExitError(fmt.Sprintf(
