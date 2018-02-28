@@ -19,7 +19,7 @@ func main() {
 				cli.StringFlag{
 					Name:  "server, s",
 					Usage: "Atum server `URL`",
-					Value: "http://localhost:8080/",
+					Value: "https://metrics.privacybydesign.foundation/atum",
 				},
 				cli.StringFlag{
 					Name:  "file, f",
