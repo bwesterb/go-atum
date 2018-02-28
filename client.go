@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -56,6 +57,10 @@ func SendRequest(serverUrl string, req Request) (*Timestamp, Error) {
 
 // Actually request the timestamp.
 func sendRequest(serverUrl string, req Request) (bool, *Timestamp, Error) {
+	if !strings.HasSuffix(serverUrl, "/") {
+		serverUrl += "/"
+	}
+
 	info := cache.GetServerInfo(serverUrl)
 
 	if info != nil {
@@ -161,15 +166,19 @@ func (ts *Timestamp) VerifyFrom(r io.Reader) (valid bool, err Error) {
 
 // Asks the Atum server if the public key on the signature should be trusted
 func (ts *Timestamp) VerifyPublicKey() (trusted bool, err Error) {
-	expires := cache.GetPublicKey(ts.ServerUrl, ts.Sig.Alg, ts.Sig.PublicKey)
+	serverUrl := ts.ServerUrl
+	if !strings.HasSuffix(serverUrl, "/") {
+		serverUrl += "/"
+	}
+	expires := cache.GetPublicKey(serverUrl, ts.Sig.Alg, ts.Sig.PublicKey)
 	if expires != nil && expires.Sub(time.Now()).Seconds() > 0 {
 		return true, nil
 	}
 	q := url.Values{}
 	q.Set("alg", string(ts.Sig.Alg))
 	q.Set("pk", hex.EncodeToString(ts.Sig.PublicKey))
-	resp, err2 := http.Get(fmt.Sprintf("%s/checkPublicKey?%s",
-		ts.ServerUrl, q.Encode()))
+	resp, err2 := http.Get(fmt.Sprintf("%scheckPublicKey?%s",
+		serverUrl, q.Encode()))
 	if err2 != nil {
 		return false, wrapErrorf(err2, "http.Get()")
 	}
@@ -189,7 +198,7 @@ func (ts *Timestamp) VerifyPublicKey() (trusted bool, err Error) {
 	if !pkResp.Trusted {
 		return false, nil
 	}
-	cache.StorePublicKey(ts.ServerUrl, ts.Sig.Alg,
+	cache.StorePublicKey(serverUrl, ts.Sig.Alg,
 		ts.Sig.PublicKey, pkResp.Expires)
 	return true, nil
 }
