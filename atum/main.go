@@ -17,7 +17,7 @@ func main() {
 			Action: cmdStamp,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "server, s",
+					Name:  "server, S",
 					Usage: "Atum server `URL`",
 					Value: "https://metrics.privacybydesign.foundation/atum",
 				},
@@ -71,6 +71,10 @@ func main() {
 				cli.StringFlag{
 					Name:  "timestamp, t",
 					Usage: "Read timestamp from `FILE`",
+				},
+				cli.StringFlag{
+					Name:  "server, S",
+					Usage: "Ensures the timestamp is signed by server at `URL`",
 				},
 			},
 		},

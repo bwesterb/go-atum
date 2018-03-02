@@ -20,6 +20,10 @@ func cmdVerify(c *cli.Context) error {
 	var tsBuf []byte
 	var err error
 
+	if c.NArg() != 0 {
+		return cli.NewExitError("I don't expect arguments; only flags", 13)
+	}
+
 	// Read timestamp
 	if c.IsSet("timestamp") && c.IsSet("stdin") {
 		return cli.NewExitError(
@@ -51,6 +55,13 @@ func cmdVerify(c *cli.Context) error {
 	if err != nil {
 		return cli.NewExitError(fmt.Sprintf(
 			"Failed to parse timestamp file: %v", err), 11)
+	}
+
+	// Check if the server is ok
+	if c.IsSet("server") && c.String("server") != ts.ServerUrl {
+		return cli.NewExitError(fmt.Sprintf(
+			"The timestamp is from %v instead of %v",
+			ts.ServerUrl, c.String("server")), 12)
 	}
 
 	// Check the timestamp
@@ -99,7 +110,7 @@ func cmdVerify(c *cli.Context) error {
 		return cli.NewExitError("Invalid signature", 12)
 	}
 
-	fmt.Printf("Timestamp is valid.\n")
+	fmt.Printf("This is a valid timestamp by %v\n", ts.ServerUrl)
 
 	return nil
 }

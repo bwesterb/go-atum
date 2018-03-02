@@ -20,6 +20,10 @@ func cmdStamp(c *cli.Context) error {
 	var err error
 	var hashing *atum.Hashing
 
+	if c.NArg() != 0 {
+		return cli.NewExitError("I don't expect arguments; only flags", 13)
+	}
+
 	if c.IsSet("hex-nonce") {
 		req.Nonce, err = hex.DecodeString(c.String("hex-nonce"))
 		if err != nil {
