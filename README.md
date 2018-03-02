@@ -24,8 +24,12 @@ This returns a Json encoded version of the timestamp.
 To check whether this timestamp is valid, run
 
 ```go
-valid, _ := atum.Verify(tsBytes)
+valid, tsServer _ := atum.Verify(tsBytes, nonce)
 ```
+
+As anyone can run their own Atum server, you should check whether you
+should trust the Atum server that signed the timestamp (`tsServer` in the
+example above).
 
 By default, the Atum server issues XMSSMT signatures, which are somewhat large
 in size. To request an Ed25519 signature, which is smaller, but not safe
@@ -64,6 +68,18 @@ To check the timestamp, run
 ```
 atum verify -f some-document
 ```
+
+This will tell whether the timestamp is valid and by which server it was set.
+Like before, anyone can set up an Atum server, so you should check whether
+you trust the Atum server which set the timestamp.
+
+To check for a specific server, run
+
+```
+atum verify -f some-document -S https://some.atum/server
+```
+
+This will fail if the document is not signed by that specific Atum server.
 
 See `atum -h` for more options.
 

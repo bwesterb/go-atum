@@ -138,7 +138,7 @@ func (h *Hashing) ComputeNonce(msg io.Reader) ([]byte, Error) {
 	}
 }
 
-// Verifies the timestamp on a message contained in a io.Reader
+// Like Verify(), but reads the message from an io.Reader.
 func (ts *Timestamp) VerifyFrom(r io.Reader) (valid bool, err Error) {
 	var nonce []byte
 
@@ -203,7 +203,11 @@ func (ts *Timestamp) VerifyPublicKey() (trusted bool, err Error) {
 	return true, nil
 }
 
-// Verifies the timestamp
+// Verifies the timestamp.
+//
+// NOTE anyone can create a "valid" Atum timestamp by setting up their own
+//      server.  You should check that you trust the server, which is
+//      set in TimeStamp.ServerUrl.
 func (ts *Timestamp) Verify(msgOrNonce []byte) (valid bool, err Error) {
 	return ts.VerifyFrom(bytes.NewReader(msgOrNonce))
 }
@@ -229,4 +233,38 @@ func (sig *Signature) DangerousVerifySignatureButNotPublicKey(
 	default:
 		return false, errorf("Signature algorithm %s not supported", sig.Alg)
 	}
+}
+
+// Verifies whether a Json encoded timestamp is valid.  Returns the server
+// which set the timestamp.
+//
+// NOTE anyone can create a "valid" Atum timestamp by setting up their own
+//      server.  You should check that you trust the server.
+func Verify(jsonTs []byte, msgOrNonce []byte) (
+	valid bool, serverUrl string, err Error) {
+	var ts Timestamp
+	err2 := json.Unmarshal(jsonTs, &ts)
+	if err2 != nil {
+		return false, "", wrapErrorf(err2, "json.Unmarshal()")
+	}
+	valid, err = ts.Verify(msgOrNonce)
+	if err != nil {
+		return valid, "", err
+	}
+	return valid, ts.ServerUrl, err
+}
+
+// Like Verify(), but reads the message from an io.Reader.
+func VerifyFrom(jsonTs []byte, msg io.Reader) (
+	valid bool, serverUrl string, err Error) {
+	var ts Timestamp
+	err2 := json.Unmarshal(jsonTs, &ts)
+	if err2 != nil {
+		return false, "", wrapErrorf(err2, "json.Unmarshal()")
+	}
+	valid, err = ts.VerifyFrom(msg)
+	if err != nil {
+		return valid, "", err
+	}
+	return valid, ts.ServerUrl, err
 }
