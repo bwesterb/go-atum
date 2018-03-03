@@ -83,6 +83,12 @@ This will fail if the document is not signed by that specific Atum server.
 
 See `atum -h` for more options.
 
+Server
+------
+
+Want to run your own Atum server?  Check out [atumd](
+    https://github.com/bwesterb/atumd).
+
 Protocol
 --------
 
@@ -274,8 +280,20 @@ would return
 The `Expires` field contains the time after which the client should check back
 with the server whether the public key is still trusted.
 
-Server
-------
+Other remarks
+-------------
 
-Want to run your own Atum server?  Check out [atumd](
-    https://github.com/bwesterb/atumd).
+1. **Trusted server.**
+   Anyone can run an Atum server, which might or might not be honest.
+   It is not sufficient to check that an Atum timestamp is valid: you should
+   ensture that you trust the Atum server by which it was set.
+2. **`xmssmt` or `ed25519`**
+   The `ed25519` signatures are significantly smaller (0.4kB versus 2kB
+   for `XMSSMT-SHA2_40/2_512`) and faster to create and verify.
+   `xmssmt` is still very fast, it takes approximately 5ms to create or
+   verify a signature for `XMSSMT-SHA2_40/2_512`.
+   The big difference is that `ed25519` is easily broken by someone in
+   possesion of a moderately sized quantum computer, which we are likely
+   to see within the next 50 years.  On the other hand, it seems very
+   unlikely that `XMSSMT-SHA2_40/2_512` will be broken in the forseeable
+   future.
