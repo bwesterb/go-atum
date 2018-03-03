@@ -58,9 +58,9 @@ type serverInfoRecord struct {
 }
 
 type pkRecord struct {
-	Pk      []byte             `gorm:"index:pk_alg_server"`
-	Server  string             `gorm:"index:pk_alg_server"`
-	Alg     SignatureAlgorithm `gorm:"index:pk_alg_server"`
+	Pk      []byte `gorm:"index:pk_alg_server"`
+	Server  string `gorm:"index:pk_alg_server"`
+	Alg     string `gorm:"index:pk_alg_server"`
 	Expires time.Time
 }
 
@@ -107,11 +107,11 @@ func (cache *sqlite3Cache) StorePublicKey(serverUrl string, alg SignatureAlgorit
 	}
 	if err := cache.db.Where(&pkRecord{
 		Pk:     pk,
-		Alg:    alg,
+		Alg:    string(alg),
 		Server: serverUrl,
 	}).Assign(&pkRecord{Expires: expires}).FirstOrCreate(&pkRecord{
 		Pk:      pk,
-		Alg:     alg,
+		Alg:     string(alg),
 		Server:  serverUrl,
 		Expires: expires,
 	}).Error; err != nil {
@@ -129,7 +129,7 @@ func (cache *sqlite3Cache) GetPublicKey(serverUrl string,
 	var record pkRecord
 	if cache.db.Where(&pkRecord{
 		Pk:     pk,
-		Alg:    alg,
+		Alg:    string(alg),
 		Server: serverUrl,
 	}).First(&record).RecordNotFound() {
 		return nil
