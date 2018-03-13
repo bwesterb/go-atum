@@ -24,7 +24,7 @@ This returns a Json encoded version of the timestamp.
 To check whether this timestamp is valid, run
 
 ```go
-valid, tsServer _ := atum.Verify(tsBytes, nonce)
+valid, time, tsServer, _ := atum.Verify(tsBytes, nonce)
 ```
 
 As anyone can run their own Atum server, you should check whether you

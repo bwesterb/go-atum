@@ -241,30 +241,30 @@ func (sig *Signature) DangerousVerifySignatureButNotPublicKey(
 // NOTE anyone can create a "valid" Atum timestamp by setting up their own
 //      server.  You should check that you trust the server.
 func Verify(jsonTs []byte, msgOrNonce []byte) (
-	valid bool, serverUrl string, err Error) {
+	valid bool, tsTime time.Time, serverUrl string, err Error) {
 	var ts Timestamp
 	err2 := json.Unmarshal(jsonTs, &ts)
 	if err2 != nil {
-		return false, "", wrapErrorf(err2, "json.Unmarshal()")
+		return false, tsTime, "", wrapErrorf(err2, "json.Unmarshal()")
 	}
 	valid, err = ts.Verify(msgOrNonce)
 	if err != nil {
-		return valid, "", err
+		return valid, tsTime, "", err
 	}
-	return valid, ts.ServerUrl, err
+	return valid, ts.GetTime(), ts.ServerUrl, err
 }
 
 // Like Verify(), but reads the message from an io.Reader.
 func VerifyFrom(jsonTs []byte, msg io.Reader) (
-	valid bool, serverUrl string, err Error) {
+	valid bool, tsTime time.Time, serverUrl string, err Error) {
 	var ts Timestamp
 	err2 := json.Unmarshal(jsonTs, &ts)
 	if err2 != nil {
-		return false, "", wrapErrorf(err2, "json.Unmarshal()")
+		return false, tsTime, "", wrapErrorf(err2, "json.Unmarshal()")
 	}
 	valid, err = ts.VerifyFrom(msg)
 	if err != nil {
-		return valid, "", err
+		return valid, tsTime, "", err
 	}
-	return valid, ts.ServerUrl, err
+	return valid, ts.GetTime(), ts.ServerUrl, err
 }
