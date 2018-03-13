@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bwesterb/go-atum"
 
+	"github.com/dustin/go-humanize"
 	"github.com/urfave/cli"
 
 	"bytes"
@@ -110,7 +111,10 @@ func cmdVerify(c *cli.Context) error {
 		return cli.NewExitError("Invalid signature", 12)
 	}
 
-	fmt.Printf("This is a valid timestamp by %v\n", ts.ServerUrl)
+	at := ts.GetTime()
+
+	fmt.Printf("This is a valid timestamp created at\n\n   %s\n   (%s)\n\nby %v\n",
+		at, humanize.Time(at), ts.ServerUrl)
 
 	return nil
 }

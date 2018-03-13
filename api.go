@@ -158,3 +158,10 @@ func EncodeTimeNonce(time int64, nonce []byte) []byte {
 	copy(ret[8:], nonce)
 	return ret
 }
+
+// Returns the time at which the timestamp was set.
+//
+// NOTE Don't forget to Verify() the timestamp!
+func (ts *Timestamp) GetTime() time.Time {
+	return time.Unix(ts.Time, 0)
+}
