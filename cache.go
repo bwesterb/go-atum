@@ -3,11 +3,11 @@ package atum
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/mitchellh/go-homedir"
 
 	"encoding/json"
 	"log"
 	"os"
+	"os/user"
 	"path"
 	"sync"
 	"time"
@@ -69,11 +69,13 @@ func (cache *sqlite3Cache) ensureOpen() bool {
 		return true
 	}
 
-	cacheDirPath, err := homedir.Expand("~/.cache/atum")
+	usr, err := user.Current()
 	if err != nil {
-		log.Printf("atum cache: homedir.Expand(): %v", err)
+		log.Printf("atum cache: user.Current(): %v", err)
 		return false
 	}
+
+	cacheDirPath := path.Join(usr.HomeDir, ".cache", "atum")
 	if _, err = os.Stat(cacheDirPath); os.IsNotExist(err) {
 		err = os.MkdirAll(cacheDirPath, 0700)
 		if err != nil {
