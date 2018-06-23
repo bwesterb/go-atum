@@ -124,7 +124,6 @@ func (cache *boltCache) GetPublicKey(serverUrl string,
 	defer cache.exit()
 	var ret time.Time
 	if err := cache.db.Get(pkKey(serverUrl, alg, pk), &ret); err != nil {
-		log.Printf("atum cache: GetPublicKey(): %v", err)
 		if err != bolthold.ErrNotFound {
 			log.Printf("atum cache: GetPublicKey(): %v", err)
 		}
@@ -150,7 +149,6 @@ func (cache *boltCache) GetServerInfo(serverUrl string) *ServerInfo {
 	defer cache.exit()
 	var ret ServerInfo
 	if err := cache.db.Get(serverUrl, &ret); err != nil {
-		log.Printf("atum cache: GetServerInfo(): %v", err)
 		if err != bolthold.ErrNotFound {
 			log.Printf("atum cache: GetServerInfo(): %v", err)
 		}
