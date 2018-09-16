@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/bbolt"
 	"github.com/timshannon/bolthold"
+	bolt "go.etcd.io/bbolt"
 )
 
 var (
