@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -232,6 +233,24 @@ func (sig *Signature) DangerousVerifySignatureButNotPublicKey(
 		return valid, nil
 	default:
 		return false, errorf("Signature algorithm %s not supported", sig.Alg)
+	}
+}
+
+func (sig Signature) String() string {
+	switch sig.Alg {
+	case Ed25519:
+		return fmt.Sprintf("ed25519 signature by %s",
+			base64.StdEncoding.EncodeToString(sig.PublicKey))
+	case XMSSMT:
+		var xsig xmssmt.Signature
+		err := xsig.UnmarshalBinary(sig.Data)
+		if err != nil {
+			return fmt.Sprintf("Corrupted XMSS[MT] signature: %v", err)
+		}
+		return fmt.Sprintf("%s signature by %s", &xsig,
+			base64.StdEncoding.EncodeToString(sig.PublicKey))
+	default:
+		return "Unknown signature type"
 	}
 }
 
