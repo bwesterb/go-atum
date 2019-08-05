@@ -76,6 +76,10 @@ func main() {
 					Name:  "server, S",
 					Usage: "Ensures the timestamp is signed by server at `URL`",
 				},
+				cli.BoolFlag{
+					Name:  "verbose, v",
+					Usage: "Show additional information on the signature",
+				},
 			},
 		},
 	}

@@ -116,5 +116,9 @@ func cmdVerify(c *cli.Context) error {
 	fmt.Printf("This is a valid timestamp created at\n\n   %s\n   (%s)\n\nby %v\n",
 		at, humanize.Time(at), ts.ServerUrl)
 
+	if c.IsSet("verbose") {
+		fmt.Printf("\n(%s)\n", ts.Sig)
+	}
+
 	return nil
 }
