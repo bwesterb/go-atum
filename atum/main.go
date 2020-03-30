@@ -19,7 +19,8 @@ func main() {
 				cli.StringFlag{
 					Name:  "server, S",
 					Usage: "Atum server `URL`",
-					Value: "https://metrics.privacybydesign.foundation/atum",
+					// Hosted by SIDN.nl
+					Value: "https://keyshare.privacybydesign.foundation/atumd",
 				},
 				cli.StringFlag{
 					Name:  "file, f",

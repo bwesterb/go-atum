@@ -94,7 +94,7 @@ Protocol
 
 An Atum server is a webservice and is identified by the url it runs at.  An example of an Atum server is
 
-    https://metrics.privacybydesign.foundation/atum
+    https://keyshare.privacybydesign.foundation/atumd
     
 ### Request a timestamp
 
